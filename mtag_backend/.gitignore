@@ -1,0 +1,37 @@
+# ── Environment & Secrets ─────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Python ────────────────────────────────────────────────────────────────────
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ── Django ────────────────────────────────────────────────────────────────────
+db.sqlite3
+staticfiles/
+media/
+
+# ── Database & Cache ──────────────────────────────────────────────────────────
+offline_cache.db
+*.db
+*.sqlite3
+
+# ── Hardware Config (contain IPs, ports, device settings) ────────────────────
+rfid_config.ini
+anpr_config.ini
+gates.ini
+booth_configs/
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

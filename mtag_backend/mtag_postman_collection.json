@@ -1,0 +1,669 @@
+{
+  "info": {
+    "name": "M-Tag Toll Collection API",
+    "description": "Complete API collection for M-Tag Electronic Toll Collection System — Malir Expressway",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000", "type": "string" },
+    { "key": "token",    "value": "",                      "type": "string" },
+    { "key": "plaza_id", "value": "",                      "type": "string" },
+    { "key": "vehicle_id","value": "",                     "type": "string" },
+    { "key": "account_id","value": "",                     "type": "string" },
+    { "key": "tag_serial","value": "E28278022000000032C5A162", "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "1. Auth",
+      "item": [
+
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.access) {",
+                  "    pm.collectionVariables.set('token', res.data.access);",
+                  "    console.log('Token saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mtag.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/login/", "host": ["{{base_url}}"], "path": ["api","v1","auth","login",""] }
+          }
+        },
+
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"operator@mtag.com\",\n  \"password\": \"operator123\",\n  \"first_name\": \"Ali\",\n  \"last_name\": \"Khan\",\n  \"role\": \"operator\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/register/", "host": ["{{base_url}}"], "path": ["api","v1","auth","register",""] }
+          }
+        },
+
+        {
+          "name": "Me (Profile)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/auth/me/", "host": ["{{base_url}}"], "path": ["api","v1","auth","me",""] }
+          }
+        },
+
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/auth/logout/", "host": ["{{base_url}}"], "path": ["api","v1","auth","logout",""] }
+          }
+        },
+
+        {
+          "name": "Admin — User List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/auth/admin/users/", "host": ["{{base_url}}"], "path": ["api","v1","auth","admin","users",""] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "2. Vehicles & Tags",
+      "item": [
+
+        {
+          "name": "Available Tags (Unassigned)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/tags/available/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles","tags","available",""] }
+          }
+        },
+
+        {
+          "name": "Register Vehicle",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "    pm.collectionVariables.set('vehicle_id', res.data.id);",
+                  "    console.log('vehicle_id saved:', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plate_number\": \"ABC-123\",\n  \"vehicle_type\": \"car\",\n  \"tag_serial\": \"{{tag_serial}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles",""] }
+          }
+        },
+
+        {
+          "name": "Vehicle List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles",""] }
+          }
+        },
+
+        {
+          "name": "Vehicle by Plate Number",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/plate/ABC-123/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles","plate","ABC-123",""] }
+          }
+        },
+
+        {
+          "name": "Vehicle Detail",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/{{vehicle_id}}/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles","{{vehicle_id}}",""] }
+          }
+        },
+
+        {
+          "name": "Vehicle Update (PATCH)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"active\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/{{vehicle_id}}/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles","{{vehicle_id}}",""] }
+          }
+        },
+
+        {
+          "name": "Tag Reissue",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"E28278022000000032C5A163\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/tags/{{vehicle_id}}/reissue/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles","tags","{{vehicle_id}}","reissue",""] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "3. Accounts & Balance",
+      "item": [
+
+        {
+          "name": "Account Detail (by Vehicle)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.id) {",
+                  "    pm.collectionVariables.set('account_id', res.data.id);",
+                  "    console.log('account_id saved:', res.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/accounts/vehicle/{{vehicle_id}}/", "host": ["{{base_url}}"], "path": ["api","v1","accounts","vehicle","{{vehicle_id}}",""] }
+          }
+        },
+
+        {
+          "name": "Cash Top-up (Operator)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vehicle_id\": \"{{vehicle_id}}\",\n  \"amount\": \"500\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/operator/topup/", "host": ["{{base_url}}"], "path": ["api","v1","accounts","operator","topup",""] }
+          }
+        },
+
+        {
+          "name": "Transaction History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/accounts/{{account_id}}/transactions/", "host": ["{{base_url}}"], "path": ["api","v1","accounts","{{account_id}}","transactions",""] }
+          }
+        },
+
+        {
+          "name": "Balance Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_vehicle_id\": \"{{vehicle_id}}\",\n  \"to_vehicle_id\": \"TO_VEHICLE_UUID\",\n  \"amount\": \"100\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/accounts/transfer/", "host": ["{{base_url}}"], "path": ["api","v1","accounts","transfer",""] }
+          }
+        },
+
+        {
+          "name": "Admin — All Accounts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/accounts/admin/all/", "host": ["{{base_url}}"], "path": ["api","v1","accounts","admin","all",""] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "4. Tolls — Entry & Exit",
+      "item": [
+
+        {
+          "name": "Plaza List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var res = pm.response.json();",
+                  "if (res.data && res.data.length > 0) {",
+                  "    pm.collectionVariables.set('plaza_id', res.data[0].id);",
+                  "    console.log('plaza_id saved:', res.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/tolls/plazas/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","plazas",""] }
+          }
+        },
+
+        {
+          "name": "Toll Rates List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/tolls/rates/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","rates",""] }
+          }
+        },
+
+        {
+          "name": "ENTRY — Tag Scan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"{{tag_serial}}\",\n  \"plaza_id\": \"{{plaza_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/entry/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","entry",""] }
+          }
+        },
+
+        {
+          "name": "EXIT — Tag Scan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"{{tag_serial}}\",\n  \"plaza_id\": \"{{plaza_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/exit/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","exit",""] }
+          }
+        },
+
+        {
+          "name": "Trip History (by Vehicle)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/tolls/trips/{{vehicle_id}}/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","trips","{{vehicle_id}}",""] }
+          }
+        },
+
+        {
+          "name": "Admin — All Trips",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tolls/admin/trips/",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","tolls","admin","trips",""]
+            }
+          }
+        },
+
+        {
+          "name": "Admin — Active Trips Only",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{base_url}}/api/v1/tolls/admin/trips/?status=active",
+              "host": ["{{base_url}}"],
+              "path": ["api","v1","tolls","admin","trips",""],
+              "query": [{ "key": "status", "value": "active" }]
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "5. Admin — Plazas & Lanes & Rates",
+      "item": [
+
+        {
+          "name": "Admin — Plaza List",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/plazas/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","plazas",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Create Plaza",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Malir Expressway\",\n  \"code\": \"KPT\",\n  \"latitude\": \"24.893200\",\n  \"longitude\": \"67.193400\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/plazas/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","plazas",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Update Plaza",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/plazas/{{plaza_id}}/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","plazas","{{plaza_id}}",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Add Lane to Plaza",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"lane_number\": 1,\n  \"is_active\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/plazas/{{plaza_id}}/lanes/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","plazas","{{plaza_id}}","lanes",""] }
+          }
+        },
+
+        {
+          "name": "Admin — All Rates",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/rates/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","rates",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Add Toll Rate (Car)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entry_plaza\": \"{{plaza_id}}\",\n  \"exit_plaza\": \"{{plaza_id}}\",\n  \"vehicle_type\": \"car\",\n  \"rate\": \"150.00\",\n  \"effective_from\": \"2026-05-06\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/rates/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","rates",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Add Toll Rate (Motorcycle)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entry_plaza\": \"{{plaza_id}}\",\n  \"exit_plaza\": \"{{plaza_id}}\",\n  \"vehicle_type\": \"motorcycle\",\n  \"rate\": \"75.00\",\n  \"effective_from\": \"2026-05-06\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/rates/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","rates",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Add Toll Rate (Truck)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entry_plaza\": \"{{plaza_id}}\",\n  \"exit_plaza\": \"{{plaza_id}}\",\n  \"vehicle_type\": \"truck\",\n  \"rate\": \"300.00\",\n  \"effective_from\": \"2026-05-06\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/rates/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","rates",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Add Toll Rate (Bus)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entry_plaza\": \"{{plaza_id}}\",\n  \"exit_plaza\": \"{{plaza_id}}\",\n  \"vehicle_type\": \"bus\",\n  \"rate\": \"250.00\",\n  \"effective_from\": \"2026-05-06\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/rates/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","rates",""] }
+          }
+        },
+
+        {
+          "name": "Admin — Add Toll Rate (Van)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entry_plaza\": \"{{plaza_id}}\",\n  \"exit_plaza\": \"{{plaza_id}}\",\n  \"vehicle_type\": \"van\",\n  \"rate\": \"200.00\",\n  \"effective_from\": \"2026-05-06\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/admin/rates/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","admin","rates",""] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "6. Payments — JazzCash Top-up",
+      "item": [
+
+        {
+          "name": "Initiate JazzCash Top-up",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account_id\": \"{{account_id}}\",\n  \"amount\": \"500\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/payments/topup/", "host": ["{{base_url}}"], "path": ["api","v1","payments","topup",""] }
+          }
+        },
+
+        {
+          "name": "Top-up History",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/payments/history/{{account_id}}/", "host": ["{{base_url}}"], "path": ["api","v1","payments","history","{{account_id}}",""] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "7. Error Cases (Testing)",
+      "item": [
+
+        {
+          "name": "Entry — Tag Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"FAKEFAKEFAKE000000000000\",\n  \"plaza_id\": \"{{plaza_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/entry/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","entry",""] }
+          }
+        },
+
+        {
+          "name": "Entry — Inactive Tag (Raza Qureshi)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"E28278022000000032C5A087\",\n  \"plaza_id\": \"{{plaza_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/entry/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","entry",""] }
+          }
+        },
+
+        {
+          "name": "Entry — Low Balance Tag",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"E28278022000000032C5A165\",\n  \"plaza_id\": \"{{plaza_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/entry/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","entry",""] }
+          }
+        },
+
+        {
+          "name": "Exit — No Active Trip",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"{{tag_serial}}\",\n  \"plaza_id\": \"{{plaza_id}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/exit/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","exit",""] }
+          }
+        },
+
+        {
+          "name": "Entry — Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",  "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tag_serial\": \"{{tag_serial}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/tolls/entry/", "host": ["{{base_url}}"], "path": ["api","v1","tolls","entry",""] }
+          }
+        },
+
+        {
+          "name": "No Token (401 Test)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/vehicles/", "host": ["{{base_url}}"], "path": ["api","v1","vehicles",""] }
+          }
+        }
+
+      ]
+    }
+
+  ]
+}

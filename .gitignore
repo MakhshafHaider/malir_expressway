@@ -1,0 +1,51 @@
+# ── Python ────────────────────────────────────────────────────────────────────
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# ── Node / Frontend ───────────────────────────────────────────────────────────
+node_modules/
+app/dist/
+app/dist-ssr/
+
+
+
+
+# ── Database & Backups ────────────────────────────────────────────────────────
+*.dump
+*.sqlite3
+*.db
+mtag_backend/offline_cache.db
+production_backup.dump
+
+# ── Large / Build Artifacts ───────────────────────────────────────────────────
+mtag_backend.zip
+*.zip
+*.tar.gz
+
+# ── Django Collected Static ───────────────────────────────────────────────────
+
+# ── Logs ──────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Temp / Scratch Files ──────────────────────────────────────────────────────
+text-*.txt
+*.tmp
+
+# ── Claude Code (local project settings) ─────────────────────────────────────
+.claude/
+
+# ── OS / Editor ───────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.sw?

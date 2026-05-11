@@ -1,0 +1,29 @@
+[Unit]
+Description=m-tag Gate Server (Django + Gunicorn)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=makhshaf-haider
+WorkingDirectory=/home/makhshaf-haider/Downloads/m tag/mtag_backend
+
+# Set production settings before anything loads
+Environment=DJANGO_SETTINGS_MODULE=config.settings.lan
+Environment=PYTHONUNBUFFERED=1
+
+# Use the venv's gunicorn
+ExecStart=/home/makhshaf-haider/Downloads/m tag/mtag_backend/venv/bin/gunicorn \
+    -c gunicorn.conf.py \
+    config.wsgi:application
+
+# Auto-restart if it crashes
+Restart=always
+RestartSec=5
+
+# Keep stdout/stderr in journald (view with: journalctl -u mtag -f)
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
