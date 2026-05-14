@@ -11,3 +11,4 @@ sqlparse==0.5.5
 whitenoise==6.9.0
 websocket-client==1.8.0
 gunicorn==26.0.0
+requests==2.33.0

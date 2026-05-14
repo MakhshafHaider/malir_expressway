@@ -103,7 +103,11 @@ class TransferService:
         )
 
         # ── Deactivate source tag ─────────────────────────────────────────────
-        Tag.objects.filter(vehicle=source_account.vehicle).update(status=TagStatus.DEACTIVATED)
+        from django.utils import timezone
+        Tag.objects.filter(vehicle=source_account.vehicle).update(
+            status=TagStatus.DEACTIVATED,
+            updated_at=timezone.now(),
+        )
 
         logger.info(
             "Balance transfer — owner: %s amount: %s ref: %s src: %s dst: %s",

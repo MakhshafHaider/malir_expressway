@@ -104,11 +104,10 @@ def pull_toll_rates(master_cur, local_cur) -> int:
 
 
 def pull_tags(master_cur, local_cur) -> int:
-    """Full refresh — Tag model has no updated_at, so timestamp-based sync
-    would miss status changes (suspend/reactivate). Table is small (<10k rows)."""
+    """Full refresh — small table, catches all status/assignment changes from master."""
     master_cur.execute("""
         SELECT id, tag_serial, epc, vehicle_id, issued_at,
-               expiry_date, status, last_scanned_at
+               expiry_date, status, last_scanned_at, updated_at
         FROM tags
     """)
     rows = master_cur.fetchall()
@@ -116,12 +115,15 @@ def pull_tags(master_cur, local_cur) -> int:
         return 0
     psycopg2.extras.execute_values(local_cur, """
         INSERT INTO tags (id, tag_serial, epc, vehicle_id, issued_at,
-               expiry_date, status, last_scanned_at)
+               expiry_date, status, last_scanned_at, updated_at)
         VALUES %s
         ON CONFLICT (id) DO UPDATE SET
             status          = EXCLUDED.status,
             vehicle_id      = EXCLUDED.vehicle_id,
-            last_scanned_at = EXCLUDED.last_scanned_at
+            expiry_date     = EXCLUDED.expiry_date,
+            last_scanned_at = EXCLUDED.last_scanned_at,
+            updated_at      = EXCLUDED.updated_at
+        WHERE tags.updated_at < EXCLUDED.updated_at
     """, rows)
     return len(rows)
 

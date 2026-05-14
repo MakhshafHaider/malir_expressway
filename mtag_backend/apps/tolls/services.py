@@ -154,17 +154,34 @@ def _find_active_trip(vehicle):
         return trip
 
     try:
-        with connections['master_pg'].cursor() as cur:
-            cur.execute("""
-                SELECT id FROM toll_trips
+        with connections['master_pg'].cursor() as mcur:
+            mcur.execute("""
+                SELECT id, vehicle_id, tag_id, account_id, entry_plaza_id,
+                       entry_lane_id, entry_time, exit_plaza_id, exit_lane_id,
+                       exit_time, charge_amount, balance_before, balance_after,
+                       status, created_at, updated_at
+                FROM toll_trips
                 WHERE vehicle_id = %s AND status = 'active'
                 LIMIT 1
             """, [str(vehicle.id)])
-            row = cur.fetchone()
+            row = mcur.fetchone()
             if row:
+                # Pull trip into local DB so ExitService can lock it normally
+                from django.db import connection
+                with connection.cursor() as lcur:
+                    lcur.execute("""
+                        INSERT INTO toll_trips (
+                            id, vehicle_id, tag_id, account_id, entry_plaza_id,
+                            entry_lane_id, entry_time, exit_plaza_id, exit_lane_id,
+                            exit_time, charge_amount, balance_before, balance_after,
+                            status, created_at, updated_at)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                        ON CONFLICT (id) DO NOTHING
+                    """, row)
+                logger.info("Master fallback — pulled trip %s to local", row[0])
                 return TollTrip.objects.select_related(
                     'entry_plaza', 'vehicle'
-                ).filter(id=row[0]).first()
+                ).get(id=row[0])
     except Exception as exc:
         logger.warning("Master fallback trip lookup failed: %s", exc)
 

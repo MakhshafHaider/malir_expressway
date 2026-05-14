@@ -50,6 +50,7 @@ class Tag(models.Model):
     expiry_date = models.DateField()
     status = models.CharField(max_length=20, choices=TagStatus.choices, default=TagStatus.ACTIVE)
     last_scanned_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'tags'

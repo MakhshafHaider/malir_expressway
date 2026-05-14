@@ -75,6 +75,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 _db_primary  = env('DB_HOST',          default='localhost')
 _db_fallback = env('DB_FALLBACK_HOST', default='')
 _db_port     = env('DB_PORT',          default='5432')
+_master_host = env('MASTER_DB_HOST',   default='192.168.78.200')
 
 if _db_fallback and _db_fallback != _db_primary:
     # Multi-host mode: HOST/PORT must be empty so Django doesn't override OPTIONS
@@ -117,7 +118,7 @@ DATABASES = {
         'NAME':     env('DB_NAME',     default='mtag_db'),
         'USER':     env('DB_USER',     default='postgres'),
         'PASSWORD': env('DB_PASSWORD', default='postgres'),
-        'HOST':     _db_primary,
+        'HOST':     _master_host,
         'PORT':     _db_port,
         'OPTIONS':  {'connect_timeout': 3},
     },
