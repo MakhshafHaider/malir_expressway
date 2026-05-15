@@ -65,6 +65,9 @@ def push_users(local_cur, master_cur, since: datetime) -> int:
         VALUES %s
         ON CONFLICT (id) DO UPDATE SET
             password    = EXCLUDED.password,
+            full_name   = EXCLUDED.full_name,
+            cnic        = EXCLUDED.cnic,
+            phone       = EXCLUDED.phone,
             status      = EXCLUDED.status,
             user_role   = EXCLUDED.user_role,
             updated_at  = EXCLUDED.updated_at
@@ -90,6 +93,7 @@ def push_vehicles(local_cur, master_cur, since: datetime) -> int:
         ON CONFLICT (id) DO UPDATE SET
             status       = EXCLUDED.status,
             plate_number = EXCLUDED.plate_number,
+            vehicle_type = EXCLUDED.vehicle_type,
             updated_at   = EXCLUDED.updated_at
         WHERE vehicles.updated_at < EXCLUDED.updated_at
     """, rows)

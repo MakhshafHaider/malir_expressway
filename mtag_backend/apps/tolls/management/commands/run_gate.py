@@ -11,12 +11,15 @@ Usage:
     python manage.py run_gate --config /path/to/rfid_config.ini
 """
 import configparser
+import logging
 import os
 import threading
 import time
 from datetime import datetime
 
 from django.core.management.base import BaseCommand, CommandError
+
+log = logging.getLogger('apps.tolls.gate')
 
 
 def resolve_plaza_lane(plaza_code: str, plaza_id: str, lane_number: str, lane_id: str):
@@ -131,8 +134,9 @@ def _fire(url):
     import requests
     try:
         requests.get(url, timeout=2)
-    except Exception:
-        pass
+        log.debug("[display] OK — %s", url)
+    except Exception as exc:
+        log.warning("[display] FAILED — %s — %s", url, exc)
 
 
 def _bg_display(url):
@@ -157,6 +161,7 @@ class GateController:
 
         self.last_seen: dict    = {}   # (epc, tid) → datetime
         self.last_trigger: dict = {}   # tid → float (monotonic)
+        self._last_tx: float    = 0.0  # monotonic time of last transaction
         self._lock = threading.Lock()
         self._running = True
 
@@ -221,7 +226,6 @@ class GateController:
 
     def _close_barrier(self):
         self.stdout.write("[barrier] CLOSING")
-        _bg_display(f"http://{self.display_ip}/thankyou")
         self._send_serial('f')
 
     def _schedule_close(self):
@@ -235,14 +239,27 @@ class GateController:
     def _show_fare(self, fare):
         _bg_display(f"http://{self.display_ip}/?vehicle_number=Q.TAG&fare_amount={fare}")
 
-    def _show_denied(self):
-        _bg_display(f"http://{self.display_ip}/?vehicle_number=Q.TAG&fare_amount=0")
+    def _show_denied(self, plate=''):
+        _bg_display(f"http://{self.display_ip}/?vehicle_number=DENIED&fare_amount=0")
 
-    def _show_low_balance(self, current_balance):
-        _bg_display(f"http://{self.display_ip}/?vehicle_number=LOW.BAL&fare_amount={current_balance}")
+    def _show_low_balance(self, current_balance, plate=''):
+        bal = int(float(current_balance)) if current_balance else 0
+        _bg_display(f"http://{self.display_ip}/?vehicle_number=LOW.BAL&fare_amount={bal}")
+
+    def _show_entry(self, balance, plate=''):
+        bal = int(float(balance)) if balance else 0
+        _bg_display(f"http://{self.display_ip}/?vehicle_number=R.BAL{bal}&fare_amount=0")
+
+    def _show_exit(self, charge, remaining, plate=''):
+        rem = int(float(remaining)) if remaining else 0
+        _bg_display(f"http://{self.display_ip}/?vehicle_number=R.BAL{rem}&fare_amount={charge}")
 
     def _show_welcome(self):
-        _bg_display(f"http://{self.display_ip}/?vehicle_number=WELCOME&take_slip")
+        gate = self
+        def _do():
+            if time.monotonic() - gate._last_tx >= 5.0:
+                _fire(f"http://{gate.display_ip}/?vehicle_number=WELCOME&take_slip")
+        threading.Thread(target=_do, daemon=True).start()
 
     # ── Tag processing ────────────────────────────────────────────────────────
 
@@ -276,15 +293,25 @@ class GateController:
 
         result = self._process_tag(tid)
 
+        plate = result.get('vehicle', '')
         if not result.get('success'):
             reason = result.get('reason', 'denied')
             self.stdout.write(f"[gate] DENIED — {reason}")
-            self._show_denied()
+            self._last_tx = time.monotonic()
+            if 'balance' in reason.lower() or 'insufficient' in reason.lower():
+                bal = result.get('current_balance', '0')
+                self._show_low_balance(bal, plate)
+            else:
+                self._show_denied(plate)
             return
 
+        plate = result.get('vehicle', '')
+        self._last_tx = time.monotonic()
         offline_flag = " [OFFLINE]" if result.get('offline') else ""
-        fare = result.get('charge') or result.get('current_balance', '0')
-        self._show_fare(fare)
+        if self.gate_mode == 'exit':
+            self._show_exit(result.get('charge', '0'), result.get('balance_remaining', '0'), plate)
+        else:
+            self._show_entry(result.get('current_balance', '0'), plate)
         self._open_barrier()
         self._schedule_close()
 
@@ -327,7 +354,7 @@ class GateController:
                     gate.stdout.write(f"[error] OutputTags: {exc}")
 
             def OutputTagsOver(self, conn_id):
-                gate.stdout.write(f"[reader] Connection {conn_id} finished")
+                pass
 
         listener = _Listener()
         reader = Reader()
@@ -345,8 +372,10 @@ class GateController:
                 [ReadExtendedArea_Model(EReadBank.TID, 0, 6, "")]
             )
 
+            DISPLAY_HOLD = 5.0  # seconds to hold result on display before welcome
             while True:
-                self._show_welcome()
+                if time.monotonic() - self._last_tx > DISPLAY_HOLD:
+                    self._show_welcome()
                 self.stdout.write("[reader] Scanning...")
                 reader.inventory()
                 time.sleep(1)

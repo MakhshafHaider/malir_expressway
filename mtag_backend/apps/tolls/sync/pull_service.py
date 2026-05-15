@@ -147,9 +147,13 @@ def pull_users(master_cur, local_cur, since: datetime) -> int:
         VALUES %s
         ON CONFLICT (id) DO UPDATE SET
             password    = EXCLUDED.password,
+            full_name   = EXCLUDED.full_name,
+            cnic        = EXCLUDED.cnic,
+            phone       = EXCLUDED.phone,
             status      = EXCLUDED.status,
             user_role   = EXCLUDED.user_role,
             updated_at  = EXCLUDED.updated_at
+        WHERE users.updated_at < EXCLUDED.updated_at
     """, rows)
     return len(rows)
 
@@ -170,7 +174,9 @@ def pull_vehicles(master_cur, local_cur, since: datetime) -> int:
         ON CONFLICT (id) DO UPDATE SET
             status       = EXCLUDED.status,
             plate_number = EXCLUDED.plate_number,
+            vehicle_type = EXCLUDED.vehicle_type,
             updated_at   = EXCLUDED.updated_at
+        WHERE vehicles.updated_at < EXCLUDED.updated_at
     """, rows)
     return len(rows)
 
@@ -229,6 +235,7 @@ def pull_active_trips(master_cur, local_cur) -> int:
             charge_amount = EXCLUDED.charge_amount,
             balance_after = EXCLUDED.balance_after,
             updated_at    = EXCLUDED.updated_at
+        WHERE toll_trips.updated_at < EXCLUDED.updated_at
     """, rows)
     return len(rows)
 
